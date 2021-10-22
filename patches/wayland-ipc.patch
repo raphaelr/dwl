@@ -4,17 +4,17 @@
  
  idle-protocol.o: idle-protocol.h
  
-+net-tapesoftware-dwl-wm-protocol.h:
++net-tapesoftware-dwl-wm-unstable-v1-protocol.h:
 +	$(WAYLAND_SCANNER) server-header \
-+		protocols/net-tapesoftware-dwl-wm.xml $@
++		protocols/net-tapesoftware-dwl-wm-unstable-v1.xml $@
 +
-+net-tapesoftware-dwl-wm-protocol.c:
++net-tapesoftware-dwl-wm-unstable-v1-protocol.c:
 +	$(WAYLAND_SCANNER) private-code \
-+		protocols/net-tapesoftware-dwl-wm.xml $@
++		protocols/net-tapesoftware-dwl-wm-unstable-v1.xml $@
 +
-+net-tapesoftware-dwl-wm-protocol.o: net-tapesoftware-dwl-wm-protocol.h
-+dwl.o: net-tapesoftware-dwl-wm-protocol.h
-+dwl: net-tapesoftware-dwl-wm-protocol.o
++net-tapesoftware-dwl-wm-unstable-v1-protocol.o: net-tapesoftware-dwl-wm-unstable-v1-protocol.h
++dwl.o: net-tapesoftware-dwl-wm-unstable-v1-protocol.h
++dwl: net-tapesoftware-dwl-wm-unstable-v1-protocol.o
 +
  config.h: | config.def.h
  	cp config.def.h $@
@@ -25,7 +25,7 @@
  #include <wlr/backend/libinput.h>
  #include <wlr/util/log.h>
  #include <xkbcommon/xkbcommon.h>
-+#include "net-tapesoftware-dwl-wm-protocol.h"
++#include "net-tapesoftware-dwl-wm-unstable-v1-protocol.h"
  #ifdef XWAYLAND
  #include <X11/Xlib.h>
  #include <wlr/xwayland.h>
@@ -43,7 +43,7 @@
  	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
  
  	presentation = wlr_presentation_create(dpy, backend);
-+    wl_global_create(dpy, &znet_tapesoftware_dwl_wm_interface, 1, NULL, dwl_wm_bind);
++    wl_global_create(dpy, &znet_tapesoftware_dwl_wm_v1_interface, 1, NULL, dwl_wm_bind);
  
  #ifdef XWAYLAND
  	/*
@@ -59,7 +59,7 @@
 +static void dwl_wm_handle_destroy(struct wl_resource *resource)
 +{
 +}
-+static const struct znet_tapesoftware_dwl_wm_interface dwl_wm_implementation = {
++static const struct znet_tapesoftware_dwl_wm_v1_interface dwl_wm_implementation = {
 +    .release = dwl_wm_handle_release,
 +};
 +
@@ -67,7 +67,7 @@
 +        uint32_t version, uint32_t id)
 +{
 +	struct wl_resource *resource = wl_resource_create(client,
-+		&znet_tapesoftware_dwl_wm_interface, version, id);
++		&znet_tapesoftware_dwl_wm_v1_interface, version, id);
 +	if (!resource) {
 +		wl_client_post_no_memory(client);
 +		return;
