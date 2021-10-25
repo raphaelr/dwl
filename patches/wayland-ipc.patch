@@ -51,7 +51,7 @@
 +static void dwl_wm_bind(struct wl_client *client, void *data,
 +        uint32_t version, uint32_t id);
 +static void dwl_wm_set_monitor_inert(Monitor *monitor);
-+static void dwl_wm_printstatus(const Monitor *monitor);
++static void dwl_wm_printstatus(Monitor *monitor);
 +
  /* variables */
  static const char broken[] = "broken";
@@ -88,7 +88,7 @@
  
  #ifdef XWAYLAND
  	/*
-@@ -2622,3 +2638,105 @@ main(int argc, char *argv[])
+@@ -2622,3 +2638,111 @@ main(int argc, char *argv[])
  usage:
  	BARF("Usage: %s [-s startup command]", argv[0]);
  }
@@ -114,28 +114,34 @@
 +        free(mon);
 +    }
 +}
-+static void dwl_wm_printstatus_to(const Monitor *m, const DwlWmMonitor *mon)
++static void dwl_wm_printstatus_to(Monitor *m, const DwlWmMonitor *mon)
 +{
-+    Client *c;
-+    int tagmask, numclients, urg;
++    Client *c, *focused;
++    int tagmask, state, numclients, focused_client;
++    focused = focustop(m);
 +    for (int tag = 0; tag<LENGTH(tags); tag++) {
-+        numclients = urg = 0;
++        numclients = state = 0;
++        focused_client = -1;
 +        tagmask = 1 << tag;
++        if ((tagmask & m->tagset[m->seltags]) != 0)
++            state = state | ZNET_TAPESOFTWARE_DWL_WM_MONITOR_V1_TAG_STATE_ACTIVE;
 +        wl_list_for_each(c, &clients, link) {
 +            if (c->mon != m)
 +                continue;
 +            if (!(c->tags & tagmask))
 +                continue;
++            if (c == focused)
++                focused_client = numclients;
 +            numclients++;
 +            if (c->isurgent)
-+                urg = 1;
++                state = state | ZNET_TAPESOFTWARE_DWL_WM_MONITOR_V1_TAG_STATE_URGENT;
 +        }
 +        znet_tapesoftware_dwl_wm_monitor_v1_send_tag(mon->resource,
-+            tag, (tagmask & m->tagset[m->seltags]) != 0, numclients, urg);
++            tag, state, numclients, focused_client);
 +    }
 +    znet_tapesoftware_dwl_wm_monitor_v1_send_frame(mon->resource);
 +}
-+static void dwl_wm_printstatus(const Monitor *m)
++static void dwl_wm_printstatus(Monitor *m)
 +{
 +    DwlWmMonitor *mon;
 +    wl_list_for_each(mon, &m->dwl_wm_monitor_link, link) {
