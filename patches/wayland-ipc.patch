@@ -88,7 +88,7 @@
  
  #ifdef XWAYLAND
  	/*
-@@ -2622,3 +2638,111 @@ main(int argc, char *argv[])
+@@ -2622,3 +2638,118 @@ main(int argc, char *argv[])
  usage:
  	BARF("Usage: %s [-s startup command]", argv[0]);
  }
@@ -119,6 +119,8 @@
 +    Client *c, *focused;
 +    int tagmask, state, numclients, focused_client;
 +    focused = focustop(m);
++    znet_tapesoftware_dwl_wm_monitor_v1_send_selected(mon->resource, m == selmon);
++
 +    for (int tag = 0; tag<LENGTH(tags); tag++) {
 +        numclients = state = 0;
 +        focused_client = -1;
@@ -139,6 +141,8 @@
 +        znet_tapesoftware_dwl_wm_monitor_v1_send_tag(mon->resource,
 +            tag, state, numclients, focused_client);
 +    }
++    znet_tapesoftware_dwl_wm_monitor_v1_send_layout(mon->resource, m->lt[m->sellt] - layouts);
++    znet_tapesoftware_dwl_wm_monitor_v1_send_title(mon->resource, focused ? client_get_title(focused) : "");
 +    znet_tapesoftware_dwl_wm_monitor_v1_send_frame(mon->resource);
 +}
 +static void dwl_wm_printstatus(Monitor *m)
@@ -198,5 +202,8 @@
 +
 +    for (int i = 0; i < LENGTH(tags); i++) {
 +        znet_tapesoftware_dwl_wm_v1_send_tag(resource, tags[i]);
++    }
++    for (int i = 0; i < LENGTH(layouts); i++) {
++        znet_tapesoftware_dwl_wm_v1_send_layout(resource, layouts[i].symbol);
 +    }
 +}
