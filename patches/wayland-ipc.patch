@@ -4,11 +4,11 @@
  
  idle-protocol.o: idle-protocol.h
  
-+net-tapesoftware-dwl-wm-unstable-v1-protocol.h:
++net-tapesoftware-dwl-wm-unstable-v1-protocol.h: protocols/net-tapesoftware-dwl-wm-unstable-v1.xml
 +	$(WAYLAND_SCANNER) server-header \
 +		protocols/net-tapesoftware-dwl-wm-unstable-v1.xml $@
 +
-+net-tapesoftware-dwl-wm-unstable-v1-protocol.c:
++net-tapesoftware-dwl-wm-unstable-v1-protocol.c: protocols/net-tapesoftware-dwl-wm-unstable-v1.xml
 +	$(WAYLAND_SCANNER) private-code \
 +		protocols/net-tapesoftware-dwl-wm-unstable-v1.xml $@
 +
@@ -89,7 +89,7 @@
  
  #ifdef XWAYLAND
  	/*
-@@ -2622,3 +2639,156 @@ main(int argc, char *argv[])
+@@ -2622,3 +2639,177 @@ main(int argc, char *argv[])
  usage:
  	BARF("Usage: %s [-s startup command]", argv[0]);
  }
@@ -188,10 +188,31 @@
 +    arrange(m);
 +    printstatus();
 +}
++static void dwl_wm_monitor_handle_set_client_tags(struct wl_client *client, struct wl_resource *resource,
++    uint32_t and, uint32_t xor)
++{
++    DwlWmMonitor *mon;
++    Client *sel;
++    unsigned int newtags;
++    mon = wl_resource_get_user_data(resource);
++    if (!mon)
++        return;
++    sel = focustop(mon->monitor);
++    if (!sel)
++        return;
++    newtags = (sel->tags & and) ^ xor;
++    if (newtags) {
++		sel->tags = newtags;
++		focusclient(focustop(selmon), 1);
++		arrange(selmon);
++    }
++    printstatus();
++}
 +static const struct znet_tapesoftware_dwl_wm_monitor_v1_interface dwl_wm_monitor_implementation = {
 +    .release = dwl_wm_monitor_handle_release,
 +    .set_tags = dwl_wm_monitor_handle_set_tags,
 +    .set_layout = dwl_wm_monitor_handle_set_layout,
++    .set_client_tags = dwl_wm_monitor_handle_set_client_tags,
 +};
 +
 +// dwl_wm
@@ -248,7 +269,7 @@
 +}
 --- /dev/null
 +++ b/protocols/net-tapesoftware-dwl-wm-unstable-v1.xml
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,129 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<protocol name="net_tapesoftware_dwl_wm_unstable_v1">
 +    <copyright>
@@ -360,6 +381,15 @@
 +            </description>
 +            <arg name="tagmask" type="uint"/>
 +            <arg name="toggle_tagset" type="uint"/>
++        </request>
++
++        <request name="set_client_tags">
++            <description summary="updates the tags of the focused client. changes are applied immediately.">
++                tags are updated as follows:
++                new_tags = (current_tags AND and_tags) XOR xor_tags
++            </description>
++            <arg name="and_tags" type="uint"/>
++            <arg name="xor_tags" type="uint"/>
 +        </request>
 +
 +        <request name="set_layout">
