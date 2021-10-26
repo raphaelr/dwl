@@ -29,13 +29,14 @@
  #ifdef XWAYLAND
  #include <X11/Xlib.h>
  #include <wlr/xwayland.h>
-@@ -166,8 +167,14 @@ typedef struct {
+@@ -166,8 +167,15 @@ typedef struct {
  	void (*arrange)(Monitor *);
  } Layout;
  
 +typedef struct {
 +    struct wl_list link;
 +    struct wl_resource *resource;
++    struct Monitor *monitor;
 +} DwlWmMonitor;
 +
  struct Monitor {
@@ -44,7 +45,7 @@
  	struct wlr_output *wlr_output;
  	struct wl_listener frame;
  	struct wl_listener destroy;
-@@ -304,6 +311,11 @@ static struct wlr_surface *xytolayersurf
+@@ -304,6 +312,11 @@ static struct wlr_surface *xytolayersurf
  static Monitor *xytomon(double x, double y);
  static void zoom(const Arg *arg);
  
@@ -56,7 +57,7 @@
  /* variables */
  static const char broken[] = "broken";
  static struct wl_display *dpy;
-@@ -726,6 +738,7 @@ cleanupmon(struct wl_listener *listener,
+@@ -726,6 +739,7 @@ cleanupmon(struct wl_listener *listener,
  	wl_list_remove(&m->frame.link);
  	wl_list_remove(&m->link);
  	wlr_output_layout_remove(output_layout, m->wlr_output);
@@ -64,7 +65,7 @@
  
  	nmons = wl_list_length(&mons);
  	do // don't switch to disabled mons
-@@ -820,6 +833,7 @@ createmon(struct wl_listener *listener,
+@@ -820,6 +834,7 @@ createmon(struct wl_listener *listener,
  	struct wlr_output *wlr_output = data;
  	const MonitorRule *r;
  	Monitor *m = wlr_output->data = calloc(1, sizeof(*m));
@@ -72,7 +73,7 @@
  	m->wlr_output = wlr_output;
  
  	/* Initialize monitor state using configured rules */
-@@ -1584,6 +1598,7 @@ printstatus(void)
+@@ -1584,6 +1599,7 @@ printstatus(void)
  		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
  				sel, urg);
  		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
@@ -80,7 +81,7 @@
  	}
  	fflush(stdout);
  }
-@@ -2125,6 +2140,7 @@ setup(void)
+@@ -2125,6 +2141,7 @@ setup(void)
  	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
  
  	presentation = wlr_presentation_create(dpy, backend);
@@ -88,7 +89,7 @@
  
  #ifdef XWAYLAND
  	/*
-@@ -2622,3 +2638,118 @@ main(int argc, char *argv[])
+@@ -2622,3 +2639,156 @@ main(int argc, char *argv[])
  usage:
  	BARF("Usage: %s [-s startup command]", argv[0]);
  }
@@ -152,8 +153,45 @@
 +        dwl_wm_printstatus_to(m, mon);
 +    }
 +}
++static void dwl_wm_monitor_handle_set_tags(struct wl_client *client, struct wl_resource *resource, uint32_t t, uint32_t toggle_tagset)
++{
++    DwlWmMonitor *mon;
++    Monitor *m;
++    mon = wl_resource_get_user_data(resource);
++    if (!mon)
++        return;
++    m = mon->monitor;
++	if ((t & TAGMASK) == m->tagset[m->seltags])
++		return;
++    if (toggle_tagset)
++	    m->seltags ^= 1;
++	if (t & TAGMASK)
++		m->tagset[m->seltags] = t & TAGMASK;
++	focusclient(focustop(m), 1);
++	arrange(m);
++	printstatus();
++}
++static void dwl_wm_monitor_handle_set_layout(struct wl_client *client, struct wl_resource *resource, uint32_t layout)
++{
++    DwlWmMonitor *mon;
++    Monitor *m;
++    mon = wl_resource_get_user_data(resource);
++    if (!mon)
++    return;
++    m = mon->monitor;
++    if (layout >= LENGTH(layouts))
++    return;
++
++    if (layout != m->lt[m->sellt] - layouts)
++    m->sellt ^= 1;
++    m->lt[m->sellt] = &layouts[layout];
++    arrange(m);
++    printstatus();
++}
 +static const struct znet_tapesoftware_dwl_wm_monitor_v1_interface dwl_wm_monitor_implementation = {
 +    .release = dwl_wm_monitor_handle_release,
++    .set_tags = dwl_wm_monitor_handle_set_tags,
++    .set_layout = dwl_wm_monitor_handle_set_layout,
 +};
 +
 +// dwl_wm
@@ -175,6 +213,7 @@
 +    }
 +    dwl_wm_monitor = calloc(1, sizeof(DwlWmMonitor));
 +    dwl_wm_monitor->resource = dwlOutputResource;
++    dwl_wm_monitor->monitor = m;
 +    wl_resource_set_implementation(dwlOutputResource, &dwl_wm_monitor_implementation,
 +        dwl_wm_monitor, dwl_wm_monitor_handle_destroy);
 +    wl_list_insert(&m->dwl_wm_monitor_link, &dwl_wm_monitor->link);
@@ -209,7 +248,7 @@
 +}
 --- /dev/null
 +++ b/protocols/net-tapesoftware-dwl-wm-unstable-v1.xml
-@@ -0,0 +1,107 @@
+@@ -0,0 +1,120 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<protocol name="net_tapesoftware_dwl_wm_unstable_v1">
 +    <copyright>
@@ -287,22 +326,22 @@
 +        <event name="selected">
 +            <description summary="updates the selected state of the monitor">
 +            </description>
-+            <arg name="selected" type="int"/>
++            <arg name="selected" type="uint"/>
 +        </event>
 +
 +        <event name="tag">
 +            <description summary="updates the state of one tag">
 +            </description>
-+            <arg name="tag" type="int"/>
++            <arg name="tag" type="uint"/>
 +            <arg name="state" type="uint" enum="tag_state"/>
-+            <arg name="num_clients" type="int"/>
++            <arg name="num_clients" type="uint"/>
 +            <arg name="focused_client" type="int" summary="-1 if there is no focused client"/>
 +        </event>
 +
 +        <event name="layout">
 +            <description summary="updates the selected layout">
 +            </description>
-+            <arg name="layout" type="int"/>
++            <arg name="layout" type="uint"/>
 +        </event>
 +
 +        <event name="title">
@@ -315,5 +354,18 @@
 +            <description summary="sent after all other events have been sent. allows for atomic updates.">
 +            </description>
 +        </event>
++
++        <request name="set_tags">
++            <description summary="sets the active tags on this monitor. changes are applied immediately.">
++            </description>
++            <arg name="tagmask" type="uint"/>
++            <arg name="toggle_tagset" type="uint"/>
++        </request>
++
++        <request name="set_layout">
++            <description summary="sets the active layout on this monitor. changes are applied immediately.">
++            </description>
++            <arg name="layout" type="uint"/>
++        </request>
 +    </interface>
 +</protocol>
