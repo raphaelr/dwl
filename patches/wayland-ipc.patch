@@ -1,6 +1,9 @@
+Allows wayland clients to observe and update the window management state
+
 This adds a wayland protocol extension that allows clients to observe and
 control the window management state.
-Features supported:
+
+Supported features:
 	* observing/updating active tags and layout
 	* observing the selected output and client
 	* updating the tags of the selected client

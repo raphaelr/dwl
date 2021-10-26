@@ -1,5 +1,6 @@
-Adds the wlr_virtual_pointer_v1 protocol, just like the already existing
-keyboard protocol.
+Adds support for the wlr_virtual_pointer_v1 protocol
+
+Just like the already existing virtual keyboard protocol.
 --- a/dwl.c
 +++ b/dwl.c
 @@ -37,6 +37,7 @@
