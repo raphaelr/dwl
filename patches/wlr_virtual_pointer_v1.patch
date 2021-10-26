@@ -52,7 +52,7 @@ keyboard protocol.
 +virtualpointer(struct wl_listener *listener, void *data)
 +{
 +	struct wlr_virtual_pointer_v1_new_pointer_event *pointer = data;
-+    struct wlr_virtual_pointer_v1 *ev = pointer->new_pointer;
++	struct wlr_virtual_pointer_v1 *ev = pointer->new_pointer;
 +	struct wlr_input_device *device = &ev->input_device;
 +	createpointer(device);
 +}

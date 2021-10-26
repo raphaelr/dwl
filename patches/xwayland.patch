@@ -1,3 +1,4 @@
+Enables xwayland.
 --- a/config.mk
 +++ b/config.mk
 @@ -5,4 +5,4 @@ PREFIX = /usr/local

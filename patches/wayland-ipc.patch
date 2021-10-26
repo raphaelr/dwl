@@ -1,17 +1,21 @@
+This adds a wayland protocol extension that allows clients to observe and
+control the window management state.
+Features supported:
+	* observing/updating active tags and layout
+	* observing the selected output and client
+	* updating the tags of the selected client
 --- a/Makefile
 +++ b/Makefile
-@@ -55,6 +55,18 @@ idle-protocol.c:
+@@ -55,6 +55,16 @@ idle-protocol.c:
  
  idle-protocol.o: idle-protocol.h
  
 +net-tapesoftware-dwl-wm-unstable-v1-protocol.h: protocols/net-tapesoftware-dwl-wm-unstable-v1.xml
 +	$(WAYLAND_SCANNER) server-header \
 +		protocols/net-tapesoftware-dwl-wm-unstable-v1.xml $@
-+
 +net-tapesoftware-dwl-wm-unstable-v1-protocol.c: protocols/net-tapesoftware-dwl-wm-unstable-v1.xml
 +	$(WAYLAND_SCANNER) private-code \
 +		protocols/net-tapesoftware-dwl-wm-unstable-v1.xml $@
-+
 +net-tapesoftware-dwl-wm-unstable-v1-protocol.o: net-tapesoftware-dwl-wm-unstable-v1-protocol.h
 +dwl.o: net-tapesoftware-dwl-wm-unstable-v1-protocol.h
 +dwl: net-tapesoftware-dwl-wm-unstable-v1-protocol.o
@@ -34,222 +38,250 @@
  } Layout;
  
 +typedef struct {
-+    struct wl_list link;
-+    struct wl_resource *resource;
-+    struct Monitor *monitor;
++	struct wl_list link;
++	struct wl_resource *resource;
++	struct Monitor *monitor;
 +} DwlWmMonitor;
 +
  struct Monitor {
  	struct wl_list link;
-+    struct wl_list dwl_wm_monitor_link;
++	struct wl_list dwl_wm_monitor_link;
  	struct wlr_output *wlr_output;
  	struct wl_listener frame;
  	struct wl_listener destroy;
-@@ -304,6 +312,11 @@ static struct wlr_surface *xytolayersurf
+@@ -304,6 +312,10 @@ static struct wlr_surface *xytolayersurf
  static Monitor *xytomon(double x, double y);
  static void zoom(const Arg *arg);
  
 +static void dwl_wm_bind(struct wl_client *client, void *data,
-+        uint32_t version, uint32_t id);
-+static void dwl_wm_set_monitor_inert(Monitor *monitor);
++		uint32_t version, uint32_t id);
 +static void dwl_wm_printstatus(Monitor *monitor);
 +
  /* variables */
  static const char broken[] = "broken";
  static struct wl_display *dpy;
-@@ -726,6 +739,7 @@ cleanupmon(struct wl_listener *listener,
+@@ -721,12 +733,18 @@ cleanupmon(struct wl_listener *listener,
+ 	struct wlr_output *wlr_output = data;
+ 	Monitor *m = wlr_output->data;
+ 	int nmons, i = 0;
++	DwlWmMonitor *mon, *montmp;
+ 
+ 	wl_list_remove(&m->destroy.link);
  	wl_list_remove(&m->frame.link);
  	wl_list_remove(&m->link);
  	wlr_output_layout_remove(output_layout, m->wlr_output);
-+    dwl_wm_set_monitor_inert(m);
  
++	wl_list_for_each_safe(mon, montmp, &m->dwl_wm_monitor_link, link) {
++		wl_resource_set_user_data(mon->resource, NULL);
++		free(mon);
++	}
++
  	nmons = wl_list_length(&mons);
  	do // don't switch to disabled mons
-@@ -820,6 +834,7 @@ createmon(struct wl_listener *listener,
+ 		selmon = wl_container_of(mons.prev, selmon, link);
+@@ -820,6 +838,7 @@ createmon(struct wl_listener *listener,
  	struct wlr_output *wlr_output = data;
  	const MonitorRule *r;
  	Monitor *m = wlr_output->data = calloc(1, sizeof(*m));
-+    wl_list_init(&m->dwl_wm_monitor_link);
++	wl_list_init(&m->dwl_wm_monitor_link);
  	m->wlr_output = wlr_output;
  
  	/* Initialize monitor state using configured rules */
-@@ -1584,6 +1599,7 @@ printstatus(void)
+@@ -1584,6 +1603,7 @@ printstatus(void)
  		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
  				sel, urg);
  		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
-+        dwl_wm_printstatus(m);
++		dwl_wm_printstatus(m);
  	}
  	fflush(stdout);
  }
-@@ -2125,6 +2141,7 @@ setup(void)
+@@ -2125,6 +2145,7 @@ setup(void)
  	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
  
  	presentation = wlr_presentation_create(dpy, backend);
-+    wl_global_create(dpy, &znet_tapesoftware_dwl_wm_v1_interface, 1, NULL, dwl_wm_bind);
++	wl_global_create(dpy, &znet_tapesoftware_dwl_wm_v1_interface, 1, NULL, dwl_wm_bind);
  
  #ifdef XWAYLAND
  	/*
-@@ -2622,3 +2639,177 @@ main(int argc, char *argv[])
+@@ -2622,3 +2643,193 @@ main(int argc, char *argv[])
  usage:
  	BARF("Usage: %s [-s startup command]", argv[0]);
  }
 +
-+// dwl_wm_monitor
-+static void dwl_wm_set_monitor_inert(Monitor *m)
++/* dwl_wm_monitor_v1 */
++static void
++dwl_wm_monitor_handle_release(struct wl_client *client, struct wl_resource *resource)
 +{
-+    DwlWmMonitor *mon, *montmp;
-+    wl_list_for_each_safe(mon, montmp, &m->dwl_wm_monitor_link, link) {
-+        wl_resource_set_user_data(mon->resource, NULL);
-+        free(mon);
-+    }
++	wl_resource_destroy(resource);
 +}
-+static void dwl_wm_monitor_handle_release(struct wl_client *client, struct wl_resource *resource)
-+{
-+    wl_resource_destroy(resource);
-+}
-+static void dwl_wm_monitor_handle_destroy(struct wl_resource *resource)
-+{
-+    DwlWmMonitor *mon = wl_resource_get_user_data(resource);
-+    if (mon) {
-+        wl_list_remove(&mon->link);
-+        free(mon);
-+    }
-+}
-+static void dwl_wm_printstatus_to(Monitor *m, const DwlWmMonitor *mon)
-+{
-+    Client *c, *focused;
-+    int tagmask, state, numclients, focused_client;
-+    focused = focustop(m);
-+    znet_tapesoftware_dwl_wm_monitor_v1_send_selected(mon->resource, m == selmon);
 +
-+    for (int tag = 0; tag<LENGTH(tags); tag++) {
-+        numclients = state = 0;
-+        focused_client = -1;
-+        tagmask = 1 << tag;
-+        if ((tagmask & m->tagset[m->seltags]) != 0)
-+            state = state | ZNET_TAPESOFTWARE_DWL_WM_MONITOR_V1_TAG_STATE_ACTIVE;
-+        wl_list_for_each(c, &clients, link) {
-+            if (c->mon != m)
-+                continue;
-+            if (!(c->tags & tagmask))
-+                continue;
-+            if (c == focused)
-+                focused_client = numclients;
-+            numclients++;
-+            if (c->isurgent)
-+                state = state | ZNET_TAPESOFTWARE_DWL_WM_MONITOR_V1_TAG_STATE_URGENT;
-+        }
-+        znet_tapesoftware_dwl_wm_monitor_v1_send_tag(mon->resource,
-+            tag, state, numclients, focused_client);
-+    }
-+    znet_tapesoftware_dwl_wm_monitor_v1_send_layout(mon->resource, m->lt[m->sellt] - layouts);
-+    znet_tapesoftware_dwl_wm_monitor_v1_send_title(mon->resource, focused ? client_get_title(focused) : "");
-+    znet_tapesoftware_dwl_wm_monitor_v1_send_frame(mon->resource);
-+}
-+static void dwl_wm_printstatus(Monitor *m)
++static void
++dwl_wm_monitor_handle_destroy(struct wl_resource *resource)
 +{
-+    DwlWmMonitor *mon;
-+    wl_list_for_each(mon, &m->dwl_wm_monitor_link, link) {
-+        dwl_wm_printstatus_to(m, mon);
-+    }
++	DwlWmMonitor *mon = wl_resource_get_user_data(resource);
++	if (mon) {
++		wl_list_remove(&mon->link);
++		free(mon);
++	}
 +}
-+static void dwl_wm_monitor_handle_set_tags(struct wl_client *client, struct wl_resource *resource, uint32_t t, uint32_t toggle_tagset)
++
++static void
++dwl_wm_printstatus_to(Monitor *m, const DwlWmMonitor *mon)
 +{
-+    DwlWmMonitor *mon;
-+    Monitor *m;
-+    mon = wl_resource_get_user_data(resource);
-+    if (!mon)
-+        return;
-+    m = mon->monitor;
++	Client *c, *focused;
++	int tagmask, state, numclients, focused_client;
++	focused = focustop(m);
++	znet_tapesoftware_dwl_wm_monitor_v1_send_selected(mon->resource, m == selmon);
++
++	for (int tag = 0; tag<LENGTH(tags); tag++) {
++		numclients = state = 0;
++		focused_client = -1;
++		tagmask = 1 << tag;
++		if ((tagmask & m->tagset[m->seltags]) != 0)
++			state = state | ZNET_TAPESOFTWARE_DWL_WM_MONITOR_V1_TAG_STATE_ACTIVE;
++		wl_list_for_each(c, &clients, link) {
++			if (c->mon != m)
++				continue;
++			if (!(c->tags & tagmask))
++				continue;
++			if (c == focused)
++				focused_client = numclients;
++			numclients++;
++			if (c->isurgent)
++				state = state | ZNET_TAPESOFTWARE_DWL_WM_MONITOR_V1_TAG_STATE_URGENT;
++		}
++		znet_tapesoftware_dwl_wm_monitor_v1_send_tag(mon->resource,
++			tag, state, numclients, focused_client);
++	}
++	znet_tapesoftware_dwl_wm_monitor_v1_send_layout(mon->resource, m->lt[m->sellt] - layouts);
++	znet_tapesoftware_dwl_wm_monitor_v1_send_title(mon->resource,
++		focused ? client_get_title(focused) : "");
++	znet_tapesoftware_dwl_wm_monitor_v1_send_frame(mon->resource);
++}
++
++static void
++dwl_wm_printstatus(Monitor *m)
++{
++	DwlWmMonitor *mon;
++	wl_list_for_each(mon, &m->dwl_wm_monitor_link, link) {
++		dwl_wm_printstatus_to(m, mon);
++	}
++}
++
++static void
++dwl_wm_monitor_handle_set_tags(struct wl_client *client, struct wl_resource *resource,
++	uint32_t t, uint32_t toggle_tagset)
++{
++	DwlWmMonitor *mon;
++	Monitor *m;
++	mon = wl_resource_get_user_data(resource);
++	if (!mon)
++		return;
++	m = mon->monitor;
 +	if ((t & TAGMASK) == m->tagset[m->seltags])
 +		return;
-+    if (toggle_tagset)
-+	    m->seltags ^= 1;
++	if (toggle_tagset)
++		m->seltags ^= 1;
 +	if (t & TAGMASK)
 +		m->tagset[m->seltags] = t & TAGMASK;
++
 +	focusclient(focustop(m), 1);
 +	arrange(m);
 +	printstatus();
 +}
-+static void dwl_wm_monitor_handle_set_layout(struct wl_client *client, struct wl_resource *resource, uint32_t layout)
-+{
-+    DwlWmMonitor *mon;
-+    Monitor *m;
-+    mon = wl_resource_get_user_data(resource);
-+    if (!mon)
-+    return;
-+    m = mon->monitor;
-+    if (layout >= LENGTH(layouts))
-+    return;
 +
-+    if (layout != m->lt[m->sellt] - layouts)
-+    m->sellt ^= 1;
-+    m->lt[m->sellt] = &layouts[layout];
-+    arrange(m);
-+    printstatus();
-+}
-+static void dwl_wm_monitor_handle_set_client_tags(struct wl_client *client, struct wl_resource *resource,
-+    uint32_t and, uint32_t xor)
++static void
++dwl_wm_monitor_handle_set_layout(struct wl_client *client, struct wl_resource *resource,
++	uint32_t layout)
 +{
-+    DwlWmMonitor *mon;
-+    Client *sel;
-+    unsigned int newtags;
-+    mon = wl_resource_get_user_data(resource);
-+    if (!mon)
-+        return;
-+    sel = focustop(mon->monitor);
-+    if (!sel)
-+        return;
-+    newtags = (sel->tags & and) ^ xor;
-+    if (newtags) {
++	DwlWmMonitor *mon;
++	Monitor *m;
++	mon = wl_resource_get_user_data(resource);
++	if (!mon)
++		return;
++	m = mon->monitor;
++	if (layout >= LENGTH(layouts))
++		return;
++	if (layout != m->lt[m->sellt] - layouts)
++		m->sellt ^= 1;
++
++	m->lt[m->sellt] = &layouts[layout];
++	arrange(m);
++	printstatus();
++}
++
++static void
++dwl_wm_monitor_handle_set_client_tags(struct wl_client *client, struct wl_resource *resource,
++	uint32_t and, uint32_t xor)
++{
++	DwlWmMonitor *mon;
++	Client *sel;
++	unsigned int newtags;
++	mon = wl_resource_get_user_data(resource);
++	if (!mon)
++		return;
++	sel = focustop(mon->monitor);
++	if (!sel)
++		return;
++	newtags = (sel->tags & and) ^ xor;
++	if (newtags) {
 +		sel->tags = newtags;
 +		focusclient(focustop(selmon), 1);
 +		arrange(selmon);
-+    }
-+    printstatus();
++		printstatus();
++	}
 +}
++
 +static const struct znet_tapesoftware_dwl_wm_monitor_v1_interface dwl_wm_monitor_implementation = {
-+    .release = dwl_wm_monitor_handle_release,
-+    .set_tags = dwl_wm_monitor_handle_set_tags,
-+    .set_layout = dwl_wm_monitor_handle_set_layout,
-+    .set_client_tags = dwl_wm_monitor_handle_set_client_tags,
++	.release = dwl_wm_monitor_handle_release,
++	.set_tags = dwl_wm_monitor_handle_set_tags,
++	.set_layout = dwl_wm_monitor_handle_set_layout,
++	.set_client_tags = dwl_wm_monitor_handle_set_client_tags,
 +};
 +
-+// dwl_wm
-+static void dwl_wm_handle_release(struct wl_client *client, struct wl_resource *resource)
++/* dwl_wm_v1 */
++static void
++dwl_wm_handle_release(struct wl_client *client, struct wl_resource *resource)
 +{
-+    wl_resource_destroy(resource);
++	wl_resource_destroy(resource);
 +}
-+static void dwl_wm_handle_get_monitor(struct wl_client *client, struct wl_resource *resource,
-+        uint32_t id, struct wl_resource *output)
++
++static void
++dwl_wm_handle_get_monitor(struct wl_client *client, struct wl_resource *resource,
++	uint32_t id, struct wl_resource *output)
 +{
-+    DwlWmMonitor *dwl_wm_monitor;
-+    struct wlr_output *wlr_output = wlr_output_from_resource(output);
-+    struct Monitor *m = wlr_output->data;
-+    struct wl_resource *dwlOutputResource = wl_resource_create(client,
-+        &znet_tapesoftware_dwl_wm_monitor_v1_interface, wl_resource_get_version(resource), id);
-+    if (!resource) {
-+        wl_client_post_no_memory(client);
-+        return;
-+    }
-+    dwl_wm_monitor = calloc(1, sizeof(DwlWmMonitor));
-+    dwl_wm_monitor->resource = dwlOutputResource;
-+    dwl_wm_monitor->monitor = m;
-+    wl_resource_set_implementation(dwlOutputResource, &dwl_wm_monitor_implementation,
-+        dwl_wm_monitor, dwl_wm_monitor_handle_destroy);
-+    wl_list_insert(&m->dwl_wm_monitor_link, &dwl_wm_monitor->link);
-+    dwl_wm_printstatus_to(m, dwl_wm_monitor);
++	DwlWmMonitor *dwl_wm_monitor;
++	struct wlr_output *wlr_output = wlr_output_from_resource(output);
++	struct Monitor *m = wlr_output->data;
++	struct wl_resource *dwlOutputResource = wl_resource_create(client,
++		&znet_tapesoftware_dwl_wm_monitor_v1_interface, wl_resource_get_version(resource), id);
++	if (!resource) {
++		wl_client_post_no_memory(client);
++		return;
++	}
++	dwl_wm_monitor = calloc(1, sizeof(DwlWmMonitor));
++	dwl_wm_monitor->resource = dwlOutputResource;
++	dwl_wm_monitor->monitor = m;
++	wl_resource_set_implementation(dwlOutputResource, &dwl_wm_monitor_implementation,
++	dwl_wm_monitor, dwl_wm_monitor_handle_destroy);
++	wl_list_insert(&m->dwl_wm_monitor_link, &dwl_wm_monitor->link);
++	dwl_wm_printstatus_to(m, dwl_wm_monitor);
 +}
-+static void dwl_wm_handle_destroy(struct wl_resource *resource)
++
++static void
++dwl_wm_handle_destroy(struct wl_resource *resource)
 +{
++	/* no state to destroy */
 +}
++
 +static const struct znet_tapesoftware_dwl_wm_v1_interface dwl_wm_implementation = {
-+    .release = dwl_wm_handle_release,
-+    .get_monitor = dwl_wm_handle_get_monitor,
++	.release = dwl_wm_handle_release,
++	.get_monitor = dwl_wm_handle_get_monitor,
 +};
 +
-+static void dwl_wm_bind(struct wl_client *client, void *data,
-+        uint32_t version, uint32_t id)
++static void
++dwl_wm_bind(struct wl_client *client, void *data,
++	uint32_t version, uint32_t id)
 +{
 +	struct wl_resource *resource = wl_resource_create(client,
 +		&znet_tapesoftware_dwl_wm_v1_interface, version, id);
@@ -260,12 +292,10 @@
 +
 +	wl_resource_set_implementation(resource, &dwl_wm_implementation, NULL, dwl_wm_handle_destroy);
 +
-+    for (int i = 0; i < LENGTH(tags); i++) {
-+        znet_tapesoftware_dwl_wm_v1_send_tag(resource, tags[i]);
-+    }
-+    for (int i = 0; i < LENGTH(layouts); i++) {
-+        znet_tapesoftware_dwl_wm_v1_send_layout(resource, layouts[i].symbol);
-+    }
++	for (int i = 0; i < LENGTH(tags); i++)
++		znet_tapesoftware_dwl_wm_v1_send_tag(resource, tags[i]);
++	for (int i = 0; i < LENGTH(layouts); i++)
++		znet_tapesoftware_dwl_wm_v1_send_layout(resource, layouts[i].symbol);
 +}
 --- /dev/null
 +++ b/protocols/net-tapesoftware-dwl-wm-unstable-v1.xml
