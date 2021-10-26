@@ -1,20 +1,21 @@
 #!/bin/sh
 # creates a git branch for every patch
 set -e
-from=master
+from=upstream/main
 patches="wlr_virtual_pointer_v1 wayland-ipc"
+tmp="$(mktemp)"
 
 headerof() {
     awk '/---/ { exit; } { print; }' "$1"
 }
 
-git checkout master
 for patch in $patches; do
     fn="patches/${patch}.patch"
     echo "$fn"
+    cp -f "$fn" "$tmp"
     git branch -f "$patch" "$from"
     git checkout "$patch"
-    git apply --index "$fn"
-    headerof "$fn" | git commit -F -
+    git apply --index "$tmp"
+    headerof "$tmp" | git commit -F -
+    git checkout master
 done
-git checkout "$from"
