@@ -1,0 +1,24 @@
+Adjust the dwl build for my own purposes.
+--- a/Makefile
++++ b/Makefile
+@@ -16,9 +16,11 @@ clean:
+ 
+ install: dwl
+ 	install -D dwl $(PREFIX)/bin/dwl
++	install -D dwl-session $(PREFIX)/bin/dwl-session
+ 
+ uninstall:
+ 	rm -f $(PREFIX)/bin/dwl
++	rm -f$(PREFIX)/bin/dwl-session
+ 
+ .PHONY: all clean install uninstall
+ 
+@@ -56,7 +58,7 @@ idle-protocol.c:
+ idle-protocol.o: idle-protocol.h
+ 
+ config.h: | config.def.h
+-	cp config.def.h $@
++	cp -n config.def.h $@
+ 
+ dwl.o: config.mk config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
+ 

@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+maybe() {
+    if [ -x "$1" ]; then "$@" & fi
+}
+
+if [ "$1" = 'child' ]; then
+    maybe /usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
+    maybe /usr/bin/spectacle -s
+    somebar &
+else
+    export QT_QPA_PLATFORM=wayland
+    exec dwl -s "$0 child"
+fi
