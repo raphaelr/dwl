@@ -5,6 +5,7 @@ maybe() {
 }
 
 if [ "$1" = 'child' ]; then
+    exec <&-
     maybe /usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
     maybe /usr/bin/spectacle -s
     somebar &
