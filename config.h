@@ -54,8 +54,8 @@ static const struct xkb_rule_names xkb_rules = {
     .options = "caps:backspace,compose:ralt"
 };
 
-static const int repeat_rate = 25;
-static const int repeat_delay = 600;
+static const int repeat_rate = 50;
+static const int repeat_delay = 200;
 
 /* Trackpad */
 static const int tap_to_click = 1;
@@ -81,7 +81,7 @@ static const Key keys[] = {
 	/* Note that Shift changes certain key codes: c -> C, 2 -> at, etc. */
     /* spawns */
     /* modifier                  key                 function        argument */
-    { MODKEY,                    XKB_KEY_m,          spawn,          RUN("bemenu-run") },
+    { MODKEY,                    XKB_KEY_m,          spawn,          RUN("bemenu-run", "-l", "10") },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_M,          spawn,          RUN("desktop-menu") },
     { MODKEY,                    XKB_KEY_a,          spawn,          RUN("desktop-hotkey", "auto-type-pw") },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_A,          spawn,          RUN("desktop-hotkey", "auto-type-user") },
