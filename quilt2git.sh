@@ -16,6 +16,7 @@ for patch in $patches; do
     git branch -f "$patch" "$from"
     git checkout "$patch"
     git apply --index "$tmp"
+    make -B
     headerof "$tmp" | git commit -F -
     git checkout master
 done
