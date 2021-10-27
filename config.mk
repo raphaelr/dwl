@@ -5,4 +5,8 @@ PREFIX = /usr/local
 CFLAGS ?= -g -Wall -Wextra -Werror -Wno-unused-parameter -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wdeclaration-after-statement
 
 # Uncomment to build XWayland support
-#CFLAGS += -DXWAYLAND
+CFLAGS += -DXWAYLAND
+
+ifeq ($(ALT), 1)
+	CFLAGS += -DMODKEY=WLR_MODIFIER_ALT
+endif
