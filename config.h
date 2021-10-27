@@ -82,13 +82,13 @@ static const Key keys[] = {
     /* spawns */
     /* modifier                  key                 function        argument */
     { MODKEY,                    XKB_KEY_m,          spawn,          RUN("bemenu-run", "-l", "10") },
-    { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_M,          spawn,          RUN("desktop-menu") },
+    { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_M,          spawn,          RUN("desktop-hotkey", "desktop-menu") },
     { MODKEY,                    XKB_KEY_a,          spawn,          RUN("desktop-hotkey", "auto-type-pw") },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_A,          spawn,          RUN("desktop-hotkey", "auto-type-user") },
     { MODKEY,                    XKB_KEY_w,          spawn,          RUN("xdg-open", "https://") },
     { MODKEY,                    XKB_KEY_e,          spawn,          RUN("pcmanfm-qt") },
     { MODKEY,                    XKB_KEY_q,          spawn,          RUN("desktop-hotkey", "emoji-menu") },
-    { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_p,          spawn,          RUN("power-menu") },
+    { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_P,          spawn,          RUN("desktop-hotkey", "power-menu") },
     { MODKEY,                    XKB_KEY_F5,         spawn,          RUN("desktop-hotkey", "light-down") },
     { MODKEY,                    XKB_KEY_F6,         spawn,          RUN("desktop-hotkey", "light-up") },
     { MODKEY,                    XKB_KEY_F9,         spawn,          RUN("desktop-hotkey", "volume-down") },
@@ -98,8 +98,8 @@ static const Key keys[] = {
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_F12,        spawn,          RUN("desktop-hotkey", "toggle-mic") },
     { 0,                         XKB_KEY_Print,      spawn,          RUN("spectacle") },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Return,     spawn,          RUN("foot") },
-    { MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_Return,     spawn,          RUN("foot tmux") },
-    { MODKEY,                    XKB_KEY_x,          spawn,          RUN("foot tmux") },
+    { MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_Return,     spawn,          RUN("foot", "tmux") },
+    { MODKEY,                    XKB_KEY_x,          spawn,          RUN("foot", "tmux") },
 
     /* window management */
 	/* modifier                  key                 function        argument */
