@@ -2,7 +2,7 @@
 # creates a git branch for every patch
 set -e
 from=upstream/main
-patches="tag-handling wlr_virtual_pointer_v1 wayland-ipc"
+patches="tag-handling master-on-right-toggle wlr_virtual_pointer_v1 wayland-ipc"
 tmp="$(mktemp)"
 
 headerof() {
