@@ -105,6 +105,8 @@ static const Key keys[] = {
 	/* modifier                  key                 function        argument */
 	{ MODKEY,                    XKB_KEY_j,          focusstack,     {.i = +1} },
 	{ MODKEY,                    XKB_KEY_k,          focusstack,     {.i = -1} },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_J,          pushdown,       {0} },
+	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_K,          pushup,         {0} },
     { MODKEY,                    XKB_KEY_n,          incnmaster,     {.i = +1} },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_n,          incnmaster,     {.i = -1} },
 	{ MODKEY,                    XKB_KEY_h,          setmfact,       {.f = -0.05} },

@@ -1,4 +1,5 @@
 localconfig.patch
+push.patch
 tag-handling.patch
 wlr_virtual_pointer_v1.patch
 wayland-ipc.patch
