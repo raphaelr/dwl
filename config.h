@@ -86,6 +86,7 @@ static const Key keys[] = {
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_M,          spawn,          RUN("desktop-hotkey", "desktop-menu") },
     { MODKEY,                    XKB_KEY_a,          spawn,          RUN("desktop-hotkey", "auto-type-pw") },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_A,          spawn,          RUN("desktop-hotkey", "auto-type-user") },
+    { MODKEY,                    XKB_KEY_b,          spawn,          RUN("desktop-hotkey", "wl-toggle-bar") },
     { MODKEY,                    XKB_KEY_w,          spawn,          RUN("xdg-open", "https://") },
     { MODKEY,                    XKB_KEY_e,          spawn,          RUN("pcmanfm-qt") },
     { MODKEY,                    XKB_KEY_q,          spawn,          RUN("desktop-hotkey", "emoji-menu") },
