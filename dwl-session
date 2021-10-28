@@ -8,7 +8,9 @@ if [ "$1" = 'child' ]; then
     exec <&-
     maybe /usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
     maybe /usr/bin/spectacle -s
+    maybe ~/.local/lib/pulseaudio-watch someblocks
     somebar &
+    (sleep 1; someblocks) &
 else
     export QT_QPA_PLATFORM=wayland
     exec dwl -s "$0 child"

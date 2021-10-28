@@ -10,9 +10,9 @@ static const char *tags[] = {
     // 1 = web      2 = tmux        3 = code
     "\ufa9e",       "\uf120",       "\ue62b",
     // 4 = comms    5 = office      6 = media
-    "\uf868",       "\uf718",       "\uf001",
+    "\uf868",       "\uf718",       "\U0001f3b5",
     // 7 = fs       8 = backup1     9 = backup2
-    "\uf114",       "\uf9e4",       "\uf0e3"
+    "\uf114",       "\u2693",       "\uf0e3"
 };
 
 static const Rule rules[] = {
