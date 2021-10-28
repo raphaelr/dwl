@@ -2,16 +2,32 @@
 set -e
 maybe() {
     if [ -x "$1" ]; then "$@" & fi
+    jobs="$jobs $!"
+}
+spawn() {
+    "$@" &
+    jobs="$jobs $!"
 }
 
-if [ "$1" = 'child' ]; then
-    exec <&-
+if [ "$1" = 'startup' ]; then
+    trap 'trap - EXIT; kill $jobs 2> /dev/null; exit' INT TERM EXIT
+    # this is hell
+    dbus-update-activation-environment --systemd \
+        WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+
     maybe /usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
     maybe /usr/bin/spectacle -s
     maybe ~/.local/lib/pulseaudio-watch someblocks
-    somebar &
-    (sleep 1; someblocks) &
+    spawn null-notifyd
+    spawn somebar
+    spawn someblocks
+
+    while read -r dummy; do
+        :
+    done
 else
+    if [ -e ~/.profile ]; then . ~/.profile; fi
     export QT_QPA_PLATFORM=wayland
-    exec dwl -s "$0 child"
+    export XDG_CURRENT_DESKTOP=wlroots
+    exec dwl -s "$0 startup"
 fi
