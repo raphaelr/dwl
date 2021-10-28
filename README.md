@@ -1,3 +1,23 @@
+# ~raphi/dwl
+
+This is my personal build of [dwl](https://github.com/djpohly/dwl).
+This is also the canonical repository for my patches (stored under
+patches/):
+
+* master-on-right-toggle: Enables toggling the master area to the
+  right.
+* wlr_virtual_pointer_v1: Adds support for that protocol.
+* wayland-ipc: Allows wayland clients to observe and update the
+  window management state.
+
+The patches in this repository are always committed *unapplied*,
+use `quilt push -a` to apply them (requires `quilt`).
+
+The mailing list for my patches is
+[~raphi/somedesktop@lists.sr.ht](mailto:~raphi/somedesktop@lists.sr.ht).
+
+The original README of dwl starts now.
+
 # dwl - dwm for Wayland
 
 Join us on our [Discord server](https://discord.gg/jJxZnrGPWN)!
