@@ -1,33 +1,28 @@
 #!/bin/sh
 set -e
 maybe() {
-    if [ -x "$1" ]; then "$@" & fi
-    jobs="$jobs $!"
-}
-spawn() {
-    "$@" &
-    jobs="$jobs $!"
+    command -v "$1" > /dev/null && "$@"
 }
 
 if [ "$1" = 'startup' ]; then
-    trap 'trap - EXIT; kill $jobs 2> /dev/null; exit' INT TERM EXIT
+    trap "trap - TERM && kill -- -$$" INT TERM EXIT
+
     # this is hell
     dbus-update-activation-environment --systemd \
         WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 
-    maybe /usr/lib/x86_64-linux-gnu/libexec/kdeconnectd
-    maybe /usr/bin/spectacle -s
-    maybe ~/.local/lib/pulseaudio-watch someblocks
-    spawn null-notifyd
-    spawn somebar
-    spawn someblocks
+    maybe /usr/lib/x86_64-linux-gnu/libexec/kdeconnectd &
+    maybe spectacle -s &
+    maybe ~/.local/lib/pulseaudio-watch someblocks &
+    null-notifyd &
+    somebar &
+    someblocks &
 
     while read -r dummy; do
         :
     done
 else
-    if [ -e ~/.profile ]; then . ~/.profile; fi
     export QT_QPA_PLATFORM=wayland
     export XDG_CURRENT_DESKTOP=wlroots
-    exec dwl -s "$0 startup"
+    exec dwl -s "setsid -w $0 startup"
 fi
