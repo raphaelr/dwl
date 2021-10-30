@@ -98,7 +98,7 @@ static const Key keys[] = {
     { MODKEY,                    XKB_KEY_F11,        spawn,          RUN("pavucontrol") },
     { MODKEY,                    XKB_KEY_F12,        spawn,          RUN("desktop-hotkey", "toggle-speaker") },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_F12,        spawn,          RUN("desktop-hotkey", "toggle-mic") },
-    { 0,                         XKB_KEY_Print,      spawn,          RUN("spectacle") },
+    { 0,                         XKB_KEY_Print,      spawn,          RUN("desktop-hotkey", "wl-screenshot") },
     { MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_Return,     spawn,          RUN("foot") },
     { MODKEY|WLR_MODIFIER_CTRL,  XKB_KEY_Return,     spawn,          RUN("foot", "tmux") },
     { MODKEY,                    XKB_KEY_x,          spawn,          RUN("foot", "tmux") },

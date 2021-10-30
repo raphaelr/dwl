@@ -9,7 +9,7 @@ Supported features:
 	* updating the tags of the selected client
 --- a/Makefile
 +++ b/Makefile
-@@ -55,6 +55,16 @@ idle-protocol.c:
+@@ -59,6 +59,16 @@ idle-protocol.c:
  
  idle-protocol.o: idle-protocol.h
  
@@ -24,7 +24,7 @@ Supported features:
 +dwl: net-tapesoftware-dwl-wm-unstable-v1-protocol.o
 +
  config.h: | config.def.h
- 	cp config.def.h $@
+ 	cp -n config.def.h $@
  
 --- a/dwl.c
 +++ b/dwl.c
@@ -52,7 +52,7 @@ Supported features:
  	struct wlr_output *wlr_output;
  	struct wl_listener frame;
  	struct wl_listener destroy;
-@@ -304,6 +312,10 @@ static struct wlr_surface *xytolayersurf
+@@ -306,6 +314,10 @@ static struct wlr_surface *xytolayersurf
  static Monitor *xytomon(double x, double y);
  static void zoom(const Arg *arg);
  
@@ -63,26 +63,26 @@ Supported features:
  /* variables */
  static const char broken[] = "broken";
  static struct wl_display *dpy;
-@@ -721,12 +733,18 @@ cleanupmon(struct wl_listener *listener,
+@@ -723,6 +735,7 @@ void
+ cleanupmon(struct wl_listener *listener, void *data)
+ {
  	struct wlr_output *wlr_output = data;
- 	Monitor *m = wlr_output->data;
- 	int nmons, i = 0;
 +	DwlWmMonitor *mon, *montmp;
+ 	Monitor *m = wlr_output->data;
+ 	int i = 0;
  
- 	wl_list_remove(&m->destroy.link);
+@@ -730,6 +743,10 @@ cleanupmon(struct wl_listener *listener,
  	wl_list_remove(&m->frame.link);
  	wl_list_remove(&m->link);
  	wlr_output_layout_remove(output_layout, m->wlr_output);
- 
 +	wl_list_for_each_safe(mon, montmp, &m->dwl_wm_monitor_link, link) {
 +		wl_resource_set_user_data(mon->resource, NULL);
 +		free(mon);
 +	}
-+
- 	nmons = wl_list_length(&mons);
- 	do // don't switch to disabled mons
- 		selmon = wl_container_of(mons.prev, selmon, link);
-@@ -820,6 +838,7 @@ createmon(struct wl_listener *listener,
+ 
+ 	wl_list_for_each(selmon, &mons, link) {
+ 		if (selmon->wlr_output->enabled)
+@@ -824,6 +841,7 @@ createmon(struct wl_listener *listener,
  	struct wlr_output *wlr_output = data;
  	const MonitorRule *r;
  	Monitor *m = wlr_output->data = calloc(1, sizeof(*m));
@@ -90,7 +90,7 @@ Supported features:
  	m->wlr_output = wlr_output;
  
  	/* Initialize monitor state using configured rules */
-@@ -1584,6 +1603,7 @@ printstatus(void)
+@@ -1595,6 +1613,7 @@ printstatus(void)
  		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
  				sel, urg);
  		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
@@ -98,7 +98,7 @@ Supported features:
  	}
  	fflush(stdout);
  }
-@@ -2125,6 +2145,7 @@ setup(void)
+@@ -2141,6 +2160,7 @@ setup(void)
  	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
  
  	presentation = wlr_presentation_create(dpy, backend);
@@ -106,7 +106,7 @@ Supported features:
  
  #ifdef XWAYLAND
  	/*
-@@ -2622,3 +2643,193 @@ main(int argc, char *argv[])
+@@ -2644,3 +2664,193 @@ main(int argc, char *argv[])
  usage:
  	BARF("Usage: %s [-s startup command]", argv[0]);
  }
