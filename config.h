@@ -16,13 +16,34 @@ static const char *tags[] = {
     "\uf114",       "\u2693",       "\uf0e3"
 };
 
+#define T(x) (1<<(x-1))
 static const Rule rules[] = {
-	/* app_id     title       tags mask     isfloating   monitor */
+	/* app_id		title	tags	float	monitor */
 	/* examples:
-	{ "Gimp",     NULL,       0,            1,           -1 },
-	{ "firefox",  NULL,       1 << 8,       0,           -1 },
+	{ "Gimp",     NULL,       0,            1,      -1 },
+	{ "firefox",  NULL,       1 << 8,       0,      -1 },
 	*/
+	{"brave-browser",	NULL,	T(1),	0,	-1},
+	{"qutebrowser",		NULL,	T(1),	0,	-1},
+	{"foot",		NULL,	T(2),	0,	-1},
+	{"jetbrains-rider",     NULL,	T(3),	0,	-1},
+	{"org.remmina.Remmina",	NULL,	T(3),	0,	-1},
+	{"steam_app_0",		NULL,	T(3),	0,	-1},
+	{"Microsoft Teams - Preview",NULL,T(4),	0,	-1},
+	{"libreoffice-startscreen",NULL,T(5),	0,	-1},
+	{"krita",		NULL,	T(5),	0,	-1},
+	{"MuPdf",		NULL,	T(5),	0,	-1},
+	{"mousepad",		NULL,	T(5),	0,	-1},
+	{"vlc",			NULL,	T(6),	0,	-1},
+	{"mpv",			NULL,	T(6),	0,	-1},
+	{"pavucontrol",		NULL,	T(6),	0,	-1},
+	{"qBittorrent",		NULL,	T(6),	0,	-1},
+	{"pcmanfm-qt",		NULL,	T(7),	0,	-1},
+	{"KeePassXC",		NULL,	T(8),	0,	-1},
+	{"Cypress",		NULL,	T(9),	0,	-1},
+	{"Cute3DSCapture",	NULL,	T(9),	0,	-1},
 };
+#undef T
 
 /* layout(s) */
 static const Layout layouts[] = {
