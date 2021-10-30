@@ -36,7 +36,7 @@ Supported features:
  #ifdef XWAYLAND
  #include <X11/Xlib.h>
  #include <wlr/xwayland.h>
-@@ -166,8 +167,15 @@ typedef struct {
+@@ -166,6 +167,12 @@ typedef struct {
  	void (*arrange)(Monitor *);
  } Layout;
  
@@ -48,10 +48,15 @@ Supported features:
 +
  struct Monitor {
  	struct wl_list link;
-+	struct wl_list dwl_wm_monitor_link;
  	struct wlr_output *wlr_output;
- 	struct wl_listener frame;
- 	struct wl_listener destroy;
+@@ -174,6 +181,7 @@ struct Monitor {
+ 	struct wlr_box m;      /* monitor area, layout-relative */
+ 	struct wlr_box w;      /* window area, layout-relative */
+ 	struct wl_list layers[4]; // LayerSurface::link
++	struct wl_list dwl_wm_monitor_link;
+ 	const Layout *lt[2];
+ 	unsigned int seltags;
+ 	unsigned int sellt;
 @@ -306,6 +314,10 @@ static struct wlr_surface *xytolayersurf
  static Monitor *xytomon(double x, double y);
  static void zoom(const Arg *arg);
@@ -69,7 +74,7 @@ Supported features:
  	struct wlr_output *wlr_output = data;
 +	DwlWmMonitor *mon, *montmp;
  	Monitor *m = wlr_output->data;
- 	int i = 0;
+ 	int nmons, i = 0;
  
 @@ -730,6 +743,10 @@ cleanupmon(struct wl_listener *listener,
  	wl_list_remove(&m->frame.link);
@@ -80,8 +85,8 @@ Supported features:
 +		free(mon);
 +	}
  
- 	wl_list_for_each(selmon, &mons, link) {
- 		if (selmon->wlr_output->enabled)
+ 	nmons = wl_list_length(&mons);
+ 	do // don't switch to disabled mons
 @@ -824,6 +841,7 @@ createmon(struct wl_listener *listener,
  	struct wlr_output *wlr_output = data;
  	const MonitorRule *r;

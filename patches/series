@@ -1,5 +1,4 @@
 localconfig.patch
-segfault-fix.patch
 push.patch
 master-on-right-toggle.patch
 tag-handling.patch
