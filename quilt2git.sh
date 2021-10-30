@@ -15,8 +15,10 @@ for patch in $patches; do
     cp -f "$fn" "$tmp"
     git branch -f "$patch" "$from"
     git checkout "$patch"
-    git apply --index "$tmp"
+    patch -p1 --no-backup-if-mismatch -r - < "$tmp"
     make -B
+    git add -A
     headerof "$tmp" | git commit -F -
+    git reset --hard
     git checkout master
 done
