@@ -2,6 +2,7 @@
 static const int sloppyfocus        = 1;  /* focus follows mouse */
 static const unsigned int borderpx  = 1;  /* border pixel of windows */
 static const unsigned int rmaster   = 0;  /* 1 means master-area is initally on the right */
+static const int allow_constrain    = 1;  /* poitner constraints */
 static const float rootcolor[]      = {0.3, 0.3, 0.3, 1.0};
 static const float bordercolor[]    = {0.5, 0.5, 0.5, 1.0};
 static const float focuscolor[]     = {0.0, 0.333, 0.467, 1.0};
