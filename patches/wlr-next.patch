@@ -1,23 +1,5 @@
 --- a/dwl.c
 +++ b/dwl.c
-@@ -551,7 +551,7 @@ arrangelayer(Monitor *m, struct wl_list
- 			box.y -= state->margin.bottom;
- 		}
- 		if (box.width < 0 || box.height < 0) {
--			wlr_layer_surface_v1_close(wlr_layer_surface);
-+			wlr_layer_surface_v1_destroy(wlr_layer_surface);
- 			continue;
- 		}
- 		layersurface->geo = box;
-@@ -775,7 +775,7 @@ commitnotify(struct wl_listener *listene
- 	Client *c = wl_container_of(listener, c, commit);
- 
- 	/* mark a pending resize as completed */
--	if (c->resize && c->resize <= c->surface.xdg->configure_serial)
-+	if (c->resize && c->resize <= c->surface.xdg->current.configure_serial)
- 		c->resize = 0;
- }
- 
 @@ -926,13 +926,13 @@ createlayersurface(struct wl_listener *l
  	wlr_layer_surface->data = layersurface;
  
