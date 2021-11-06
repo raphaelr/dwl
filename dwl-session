@@ -15,12 +15,9 @@ if [ "$1" = 'startup' ]; then
     maybe spectacle -s &
     maybe ~/.local/lib/pulseaudio-watch someblocks &
     null-notifyd &
-    somebar &
     someblocks &
-
-    while read -r dummy; do
-        :
-    done
+    swaybg -i ~/Pictures/spotlight.jpg -o '*' -m fit &
+    somebar
 else
     export QT_QPA_PLATFORM=wayland
     export XDG_CURRENT_DESKTOP=wlroots
