@@ -25,7 +25,7 @@ series() {
 		patch="$1"
 		git show "master:patches/$patch.patch" > "$tmp"
 		patch -p1 --no-backup-if-mismatch -r - < "$tmp"
-		make -B
+		#make -B
 		git add -A
 		headerof "$tmp" | git commit -F -
 	done
