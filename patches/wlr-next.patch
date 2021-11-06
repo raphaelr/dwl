@@ -1,9 +1,23 @@
 --- a/dwl.c
 +++ b/dwl.c
-@@ -926,13 +926,13 @@ createlayersurface(struct wl_listener *l
- 	wlr_layer_surface->data = layersurface;
+@@ -777,7 +777,7 @@ commitnotify(struct wl_listener *listene
+ 	Client *c = wl_container_of(listener, c, commit);
  
+ 	/* mark a pending resize as completed */
+-	if (c->resize && c->resize <= c->surface.xdg->configure_serial)
++	if (c->resize && c->resize <= c->surface.xdg->current.configure_serial)
+ 		c->resize = 0;
+ }
+ 
+@@ -918,17 +918,17 @@ createlayersurface(struct wl_listener *l
  	m = wlr_layer_surface->output->data;
+ 
+ 	layersurface->scene = wlr_scene_subsurface_tree_create(
+-			layers[wlr_layer_surface->client_pending.layer],
++			layers[wlr_layer_surface->pending.layer],
+ 			wlr_layer_surface->surface);
+ 	layersurface->scene->data = layersurface;
+ 
 -	wl_list_insert(&m->layers[wlr_layer_surface->client_pending.layer],
 +	wl_list_insert(&m->layers[wlr_layer_surface->pending.layer],
  			&layersurface->link);
