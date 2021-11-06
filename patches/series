@@ -7,3 +7,4 @@ master-on-right-toggle.patch
 tag-handling.patch
 wayland-ipc-protocol.patch
 wayland-ipc-control.patch
+layer-performance.patch
