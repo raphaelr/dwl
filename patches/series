@@ -1,5 +1,6 @@
 localconfig.patch
 wlr-next.patch
+layer-surface-performance.patch
 fix-wtype-crash.patch
 push.patch
 pointerconstraint.patch

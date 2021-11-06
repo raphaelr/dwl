@@ -1,0 +1,31 @@
+Fixes an endless loop of configure/commit calls in swaybg
+
+Check the wlr_layer_surface_v1_state.committed bitmask to see if we need to
+rearrange. This is also what sway does.
+
+Without this check, every commit request will lead to another configure event,
+which will lead to another commit, etc.
+This results in swaybg consuming 100% CPU.
+--- a/dwl.c
++++ b/dwl.c
+@@ -150,6 +150,7 @@ typedef struct {
+ 
+ 	struct wlr_box geo;
+ 	enum zwlr_layer_shell_v1_layer layer;
++	bool mapped;
+ } LayerSurface;
+ 
+ typedef struct {
+@@ -755,6 +756,12 @@ commitlayersurfacenotify(struct wl_liste
+ 	struct wlr_output *wlr_output = wlr_layer_surface->output;
+ 	Monitor *m;
+ 
++	if (wlr_layer_surface->current.committed == 0 ||
++		layersurface->mapped != wlr_layer_surface->mapped)
++		return;
++
++	layersurface->mapped = wlr_layer_surface->mapped;
++
+ 	if (!wlr_output)
+ 		return;
+ 
