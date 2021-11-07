@@ -18,10 +18,14 @@ This loop results in swaybg consuming 100% CPU.
  } LayerSurface;
  
  typedef struct {
-@@ -801,6 +802,12 @@ commitlayersurfacenotify(struct wl_liste
+@@ -801,6 +802,16 @@ commitlayersurfacenotify(struct wl_liste
  	struct wlr_output *wlr_output = wlr_layer_surface->output;
  	Monitor *m;
  
++	if ((wlr_layer_surface->surface->current.committed & WLR_SURFACE_STATE_FRAME_CALLBACK_LIST) &&
++		wlr_output)
++		wlr_output_schedule_frame(wlr_output);
++
 +	if (wlr_layer_surface->current.committed == 0 &&
 +		layersurface->mapped == wlr_layer_surface->mapped)
 +		return;
