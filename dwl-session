@@ -9,7 +9,7 @@ if [ "$1" = 'startup' ]; then
 
     # this is hell
     dbus-update-activation-environment --systemd \
-        WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+        QT_QPA_PLATFORM WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 
     maybe /usr/lib/x86_64-linux-gnu/libexec/kdeconnectd &
     maybe spectacle -s &
@@ -19,7 +19,7 @@ if [ "$1" = 'startup' ]; then
     swaybg -i ~/Pictures/spotlight.jpg -o '*' -m fit &
     somebar
 else
-    export QT_QPA_PLATFORM=wayland
+    export QT_QPA_PLATFORM=wayland-egl
     export XDG_CURRENT_DESKTOP=wlroots
     exec dwl -s "setsid -w $0 startup"
 fi
