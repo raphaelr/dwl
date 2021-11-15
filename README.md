@@ -14,7 +14,7 @@ The patches in this repository are always committed *unapplied*,
 use `quilt push -a` to apply them (requires `quilt`).
 
 The mailing list for my patches is
-[~raphi/somedesktop@lists.sr.ht](mailto:~raphi/somedesktop@lists.sr.ht).
+[~raphi/public-inbox@lists.sr.ht](mailto:~raphi/public-inbox@lists.sr.ht).
 
 The original README of dwl starts now.
 
