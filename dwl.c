@@ -41,6 +41,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
@@ -291,6 +292,7 @@ static void updatetitle(struct wl_listener *listener, void *data);
 static void urgent(struct wl_listener *listener, void *data);
 static void view(const Arg *arg);
 static void virtualkeyboard(struct wl_listener *listener, void *data);
+static void virtualpointer(struct wl_listener *listener, void *data);
 static struct wlr_scene_node *xytonode(double x, double y, struct wlr_surface **psurface,
 		Client **pc, LayerSurface **pl, double *nx, double *ny);
 static Monitor *xytomon(double x, double y);
@@ -316,6 +318,7 @@ static struct wlr_input_inhibit_manager *input_inhibit_mgr;
 static struct wlr_layer_shell_v1 *layer_shell;
 static struct wlr_output_manager_v1 *output_mgr;
 static struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
+static struct wlr_virtual_pointer_manager_v1 *virtual_pointer_mgr;
 
 static struct wlr_cursor *cursor;
 static struct wlr_xcursor_manager *cursor_mgr;
@@ -342,6 +345,7 @@ static struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibit
 static struct wl_listener layout_change = {.notify = updatemons};
 static struct wl_listener new_input = {.notify = inputdevice};
 static struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
+static struct wl_listener new_virtual_pointer = {.notify = virtualpointer};
 static struct wl_listener new_output = {.notify = createmon};
 static struct wl_listener new_xdg_surface = {.notify = createnotify};
 static struct wl_listener new_layer_shell_surface = {.notify = createlayersurface};
@@ -2050,6 +2054,9 @@ setup(void)
 	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(dpy);
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
 			&new_virtual_keyboard);
+	virtual_pointer_mgr = wlr_virtual_pointer_manager_v1_create(dpy);
+	wl_signal_add(&virtual_pointer_mgr->events.new_virtual_pointer,
+			&new_virtual_pointer);
 	seat = wlr_seat_create(dpy, "seat0");
 	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
 	wl_signal_add(&seat->events.request_set_selection, &request_set_sel);
@@ -2332,6 +2339,15 @@ virtualkeyboard(struct wl_listener *listener, void *data)
 	struct wlr_virtual_keyboard_v1 *keyboard = data;
 	struct wlr_input_device *device = &keyboard->input_device;
 	createkeyboard(device);
+}
+
+void
+virtualpointer(struct wl_listener *listener, void *data)
+{
+	struct wlr_virtual_pointer_v1_new_pointer_event *pointer = data;
+	struct wlr_virtual_pointer_v1 *ev = pointer->new_pointer;
+	struct wlr_input_device *device = &ev->input_device;
+	createpointer(device);
 }
 
 struct wlr_scene_node *
