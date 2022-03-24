@@ -834,7 +834,7 @@ createmon(struct wl_listener *listener, void *data)
 	/* Initialize monitor state using configured rules */
 	for (size_t i = 0; i < LENGTH(m->layers); i++)
 		wl_list_init(&m->layers[i]);
-	m->tagset[0] = m->tagset[1] = 1;
+	m->tagset[0] = m->tagset[1] = TAGMASK;
 	for (r = monrules; r < END(monrules); r++) {
 		if (!r->name || strstr(wlr_output->name, r->name)) {
 			m->mfact = r->mfact;
@@ -1880,7 +1880,12 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 		/* Make sure window actually overlaps with the monitor */
 		resize(c, c->geom.x, c->geom.y, c->geom.width, c->geom.height, 0);
 		wlr_surface_send_enter(client_surface(c), m->wlr_output);
-		c->tags = newtags ? newtags : m->tagset[m->seltags]; /* assign tags of target monitor */
+		/* raphi: untested on multihead */
+		if (!newtags) {
+			newtags = m->tagset[m->seltags];
+			newtags = newtags & (-newtags);
+		}
+		c->tags = newtags;
 		arrange(m);
 	}
 	focusclient(focustop(selmon), 1);
