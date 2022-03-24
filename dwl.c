@@ -180,6 +180,7 @@ struct Monitor {
 	unsigned int tagset[2];
 	double mfact;
 	int nmaster;
+	int rmaster;
 	int un_map; /* If a map/unmap happened on this monitor, then this should be true */
 };
 
@@ -280,6 +281,7 @@ static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
 static void tile(Monitor *m);
 static void togglefloating(const Arg *arg);
+static void togglermaster(const Arg *arg);
 static void togglefullscreen(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
@@ -1070,6 +1072,13 @@ togglefullscreen(const Arg *arg)
 	Client *sel = selclient();
 	if (sel)
 		setfullscreen(sel, !sel->isfullscreen);
+}
+
+void
+togglermaster(const Arg *arg)
+{
+    selmon->rmaster = !selmon->rmaster;
+    arrange(selmon);
 }
 
 void
@@ -2161,11 +2170,17 @@ tile(Monitor *m)
 			continue;
 		if (i < m->nmaster) {
 			h = (m->w.height - my) / (MIN(n, m->nmaster) - i);
-			resize(c, m->w.x, m->w.y + my, mw, h, 0);
+			if (m->rmaster)
+				resize(c, m->w.x + m->w.width - mw, m->w.y + my, mw, h, 0);
+			else
+				resize(c, m->w.x, m->w.y + my, mw, h, 0);
 			my += c->geom.height;
 		} else {
 			h = (m->w.height - ty) / (n - i);
-			resize(c, m->w.x + mw, m->w.y + ty, m->w.width - mw, h, 0);
+			if (m->rmaster)
+				resize(c, m->w.x, m->w.y + ty, m->w.width - mw, h, 0);
+			else
+				resize(c, m->w.x + mw, m->w.y + ty, m->w.width - mw, h, 0);
 			ty += c->geom.height;
 		}
 		i++;
