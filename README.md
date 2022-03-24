@@ -22,7 +22,7 @@ The original README of dwl starts now.
 
 Join us on our [Discord server](https://discord.gg/jJxZnrGPWN)!
 
-dwl is a compact, hackable compositor for Wayland based on [wlroots](https://github.com/swaywm/wlroots). It is intended to fill the same space in the Wayland world that dwm does in X11, primarily in terms of philosophy, and secondarily in terms of functionality. Like dwm, dwl is:
+dwl is a compact, hackable compositor for Wayland based on [wlroots](https://gitlab.freedesktop.org/wlroots/wlroots/). It is intended to fill the same space in the Wayland world that dwm does in X11, primarily in terms of philosophy, and secondarily in terms of functionality. Like dwm, dwl is:
 
 - Easy to understand, hack on, and extend with patches
 - One C source file (or a very small number) configurable via `config.h`
@@ -34,20 +34,19 @@ dwl is not meant to provide every feature under the sun. Instead, like dwm, it s
 - Any features provided by dwm/Xlib: simple window borders, tags, keybindings, client rules, mouse move/resize. Providing a built-in status bar is an exception to this goal, to avoid dependencies on font rendering and/or drawing libraries when an external bar could work well.
 - Configurable multi-monitor layout support, including position and rotation
 - Configurable HiDPI/multi-DPI support
+- Idle-inhibit protocol which lets applications such as mpv disable idle monitoring
 - Provide information to external status bars via stdout/stdin
 - Urgency hints via xdg-activate protocol
+- Support screen lockers via input-inhibitor protocol
 - Various Wayland protocols
 - XWayland support as provided by wlroots (can be enabled in `config.mk`)
 - Zero flickering - Wayland users naturally expect that "every frame is perfect"
+- Layer shell popups (used by Waybar)
+- Damage tracking provided by scenegraph API
 
 Features under consideration (possibly as patches) are:
 
 - Protocols made trivial by wlroots
-- Implement the input-inhibitor protocol to support screen lockers
-- Implement the idle-inhibit protocol which lets applications such as mpv disable idle monitoring
-- Layer shell popups (used by Waybar)
-- Basic yes/no damage tracking to avoid needless redraws
-- More in-depth damage region tracking ([which may improve power usage](https://mozillagfx.wordpress.com/2019/10/22/dramatically-reduced-power-usage-in-firefox-70-on-macos-with-core-animation/))
 - Implement the text-input and input-method protocols to support IME once ibus implements input-method v2 (see https://github.com/ibus/ibus/pull/2256 and https://github.com/djpohly/dwl/pull/12)
 
 Feature *non-goals* for the main codebase include:
@@ -98,7 +97,7 @@ You can find a [list of Wayland applications on the sway wiki](https://github.co
 
 ## IRC channel
 
-dwl's IRC channel is #dwl on irc.freenode.net.
+dwl's IRC channel is #dwl on irc.libera.chat.
 
 ## Acknowledgements
 
