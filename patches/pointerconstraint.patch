@@ -1,36 +1,47 @@
-From b1d28b8a7d3fccdd46199079d88e67cdf1580002 Mon Sep 17 00:00:00 2001
-From: Palanix <davidospanov@gmail.com>
-Date: Mon, 16 Aug 2021 17:05:46 +0200
-Subject: [PATCH] apply pointerconstrain patch
+From 53840d45a76f894041702859dd90480c8cb618a2 Mon Sep 17 00:00:00 2001
+From: Palanix <palanixyt@gmail.com>
+Date: Sun, 20 Mar 2022 20:40:49 +0100
+Subject: [PATCH] Fix pointerconstraints
 
 ---
  Makefile     | 15 ++++++++--
  config.def.h |  3 ++
- dwl.c        | 81 +++++++++++++++++++++++++++++++++++++++++++++++++++-
- 3 files changed, 96 insertions(+), 3 deletions(-)
+ dwl.c        | 82 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 97 insertions(+), 3 deletions(-)
 
 --- a/Makefile
 +++ b/Makefile
-@@ -39,6 +39,16 @@ xdg-shell-protocol.c:
+@@ -40,6 +40,17 @@ xdg-shell-protocol.c:
  
  xdg-shell-protocol.o: xdg-shell-protocol.h
  
 +pointer-constraints-unstable-v1-protocol.h:
 +	$(WAYLAND_SCANNER) server-header \
 +		$(WAYLAND_PROTOCOLS)/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml $@
++
 +pointer-constraints-unstable-v1-protocol.c:
 +	$(WAYLAND_SCANNER) private-code \
 +		$(WAYLAND_PROTOCOLS)/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml $@
-+pointer-constraints-unstable-v1-protocol.o: pointer-constraints-unstable-v1-protocol.o
-+dwl.o: pointer-constraints-unstable-v1-protocol.h
-+dwl: pointer-constraints-unstable-v1-protocol.o
++
++pointer-constraints-unstable-v1-protocol.o: pointer-constraints-unstable-v1-protocol.c
++
 +
  wlr-layer-shell-unstable-v1-protocol.h:
  	$(WAYLAND_SCANNER) server-header \
  		protocols/wlr-layer-shell-unstable-v1.xml $@
+@@ -64,7 +75,9 @@ config.h: | config.def.h
+ 	cp -n config.def.h $@
+ 
+ dwl.o: config.mk config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
++dwl.o: pointer-constraints-unstable-v1-protocol.h
+ 
+ dwl.o: push.c
+ 
+ dwl: xdg-shell-protocol.o wlr-layer-shell-unstable-v1-protocol.o idle-protocol.o
++dwl: pointer-constraints-unstable-v1-protocol.o
 --- a/config.def.h
 +++ b/config.def.h
-@@ -5,6 +5,9 @@ static const float rootcolor[]      = {0
+@@ -6,6 +6,9 @@ static const float rootcolor[]      = {0
  static const float bordercolor[]    = {0.5, 0.5, 0.5, 1.0};
  static const float focuscolor[]     = {1.0, 0.0, 0.0, 1.0};
  
@@ -50,7 +61,7 @@ Subject: [PATCH] apply pointerconstrain patch
  #include <getopt.h>
  #include <linux/input-event-codes.h>
  #include <signal.h>
-@@ -30,8 +31,10 @@
+@@ -33,8 +34,10 @@
  #include <wlr/types/wlr_output_management_v1.h>
  #include <wlr/types/wlr_pointer.h>
  #include <wlr/types/wlr_presentation_time.h>
@@ -59,9 +70,9 @@ Subject: [PATCH] apply pointerconstrain patch
  #include <wlr/types/wlr_primary_selection_v1.h>
 +#include <wlr/types/wlr_relative_pointer_v1.h>
  #include <wlr/types/wlr_screencopy_v1.h>
+ #include <wlr/types/wlr_scene.h>
  #include <wlr/types/wlr_server_decoration.h>
- #include <wlr/types/wlr_seat.h>
-@@ -192,6 +195,14 @@ typedef struct {
+@@ -194,6 +197,14 @@ typedef struct {
  	int y;
  } MonitorRule;
  
@@ -76,18 +87,20 @@ Subject: [PATCH] apply pointerconstrain patch
  typedef struct {
  	const char *id;
  	const char *title;
-@@ -232,15 +243,18 @@ static void createmon(struct wl_listener
+@@ -227,10 +238,12 @@ static void createmon(struct wl_listener
  static void createnotify(struct wl_listener *listener, void *data);
  static void createlayersurface(struct wl_listener *listener, void *data);
  static void createpointer(struct wlr_input_device *device);
 +static void createpointerconstraint(struct wl_listener *listener, void *data);
  static void cursorframe(struct wl_listener *listener, void *data);
+ static void destroyidleinhibitor(struct wl_listener *listener, void *data);
  static void destroylayersurfacenotify(struct wl_listener *listener, void *data);
  static void destroynotify(struct wl_listener *listener, void *data);
 +static void destroypointerconstraint(struct wl_listener *listener, void *data);
  static Monitor *dirtomon(enum wlr_direction dir);
+ static void dragicondestroy(struct wl_listener *listener, void *data);
  static void focusclient(Client *c, int lift);
- static void focusmon(const Arg *arg);
+@@ -238,6 +251,7 @@ static void focusmon(const Arg *arg);
  static void focusstack(const Arg *arg);
  static void fullscreennotify(struct wl_listener *listener, void *data);
  static Client *focustop(Monitor *m);
@@ -95,7 +108,7 @@ Subject: [PATCH] apply pointerconstrain patch
  static void incnmaster(const Arg *arg);
  static void inputdevice(struct wl_listener *listener, void *data);
  static int keybinding(uint32_t mods, xkb_keysym_t sym);
-@@ -335,6 +349,11 @@ static struct wlr_box sgeom;
+@@ -331,6 +345,11 @@ static struct wlr_box sgeom;
  static struct wl_list mons;
  static Monitor *selmon;
  
@@ -107,7 +120,7 @@ Subject: [PATCH] apply pointerconstrain patch
  /* global event handlers */
  static struct wl_listener cursor_axis = {.notify = axisnotify};
  static struct wl_listener cursor_button = {.notify = buttonpress};
-@@ -346,6 +365,7 @@ static struct wl_listener new_input = {.
+@@ -344,6 +363,7 @@ static struct wl_listener new_input = {.
  static struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
  static struct wl_listener new_output = {.notify = createmon};
  static struct wl_listener new_xdg_surface = {.notify = createnotify};
@@ -115,7 +128,7 @@ Subject: [PATCH] apply pointerconstrain patch
  static struct wl_listener new_layer_shell_surface = {.notify = createlayersurface};
  static struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
  static struct wl_listener output_mgr_test = {.notify = outputmgrtest};
-@@ -877,6 +897,28 @@ createmon(struct wl_listener *listener,
+@@ -892,6 +912,28 @@ createmon(struct wl_listener *listener,
  }
  
  void
@@ -144,7 +157,7 @@ Subject: [PATCH] apply pointerconstrain patch
  createnotify(struct wl_listener *listener, void *data)
  {
  	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
-@@ -961,6 +1003,25 @@ createpointer(struct wlr_input_device *d
+@@ -1001,6 +1043,25 @@ createpointer(struct wlr_input_device *d
  }
  
  void
@@ -170,7 +183,7 @@ Subject: [PATCH] apply pointerconstrain patch
  cursorframe(struct wl_listener *listener, void *data)
  {
  	/* This event is forwarded by the cursor when a pointer emits an frame
-@@ -1168,6 +1229,12 @@ focustop(Monitor *m)
+@@ -1245,6 +1306,12 @@ focustop(Monitor *m)
  }
  
  void
@@ -183,11 +196,11 @@ Subject: [PATCH] apply pointerconstrain patch
  incnmaster(const Arg *arg)
  {
  	selmon->nmaster = MAX(selmon->nmaster + arg->i, 0);
-@@ -1423,8 +1490,15 @@ motionrelative(struct wl_listener *liste
+@@ -1503,7 +1570,15 @@ motionrelative(struct wl_listener *liste
  	 * special configuration applied for the specific input device which
  	 * generated the event. You can pass NULL for the device if you want to move
  	 * the cursor around without any input. */
--	wlr_cursor_move(cursor, event->device,
+-	wlr_cursor_move(cursor, event->device, event->delta_x, event->delta_y);
 +	wlr_relative_pointer_manager_v1_send_relative_motion(
 +		relative_pointer_manager,
 +		seat, (uint64_t)event->time_msec * 1000,
@@ -195,12 +208,12 @@ Subject: [PATCH] apply pointerconstrain patch
 +
 +	if (!active_constraint) {
 +		wlr_cursor_move(cursor, event->device,
- 			event->delta_x, event->delta_y);
++			event->delta_x, event->delta_y);
 +	}
  	motionnotify(event->time_msec);
  }
  
-@@ -2065,6 +2139,11 @@ setup(void)
+@@ -2018,6 +2093,11 @@ setup(void)
  			WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
  	wlr_xdg_decoration_manager_v1_create(dpy);
  

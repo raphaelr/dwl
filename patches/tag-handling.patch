@@ -1,7 +1,7 @@
 Monitors have all tags on by default.
 --- a/dwl.c
 +++ b/dwl.c
-@@ -825,7 +825,7 @@ createmon(struct wl_listener *listener,
+@@ -862,7 +862,7 @@ createmon(struct wl_listener *listener,
  	/* Initialize monitor state using configured rules */
  	for (size_t i = 0; i < LENGTH(m->layers); i++)
  		wl_list_init(&m->layers[i]);
@@ -10,9 +10,9 @@ Monitors have all tags on by default.
  	for (r = monrules; r < END(monrules); r++) {
  		if (!r->name || strstr(wlr_output->name, r->name)) {
  			m->mfact = r->mfact;
-@@ -1962,7 +1962,12 @@ setmon(Client *c, Monitor *m, unsigned i
+@@ -1974,7 +1974,12 @@ setmon(Client *c, Monitor *m, unsigned i
  		/* Make sure window actually overlaps with the monitor */
- 		applybounds(c, &m->m);
+ 		resize(c, c->geom.x, c->geom.y, c->geom.width, c->geom.height, 0);
  		wlr_surface_send_enter(client_surface(c), m->wlr_output);
 -		c->tags = newtags ? newtags : m->tagset[m->seltags]; /* assign tags of target monitor */
 +		/* raphi: untested on multihead */

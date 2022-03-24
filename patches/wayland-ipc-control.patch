@@ -5,7 +5,7 @@ globals exposed by dwl. Clients can use this interface to observe
 and control window management state.
 --- a/dwl.c
 +++ b/dwl.c
-@@ -46,6 +46,7 @@
+@@ -53,6 +53,7 @@
  #include <wlr/backend/libinput.h>
  #include <wlr/util/log.h>
  #include <xkbcommon/xkbcommon.h>
@@ -13,7 +13,7 @@ and control window management state.
  #ifdef XWAYLAND
  #include <X11/Xlib.h>
  #include <wlr/xwayland.h>
-@@ -166,6 +167,12 @@ typedef struct {
+@@ -169,6 +170,12 @@ typedef struct {
  	void (*arrange)(Monitor *);
  } Layout;
  
@@ -26,15 +26,15 @@ and control window management state.
  struct Monitor {
  	struct wl_list link;
  	struct wlr_output *wlr_output;
-@@ -174,6 +181,7 @@ struct Monitor {
+@@ -178,6 +185,7 @@ struct Monitor {
  	struct wlr_box m;      /* monitor area, layout-relative */
  	struct wlr_box w;      /* window area, layout-relative */
- 	struct wl_list layers[4]; // LayerSurface::link
+ 	struct wl_list layers[4]; /* LayerSurface::link */
 +	struct wl_list dwl_wm_monitor_link;
  	const Layout *lt[2];
  	unsigned int seltags;
  	unsigned int sellt;
-@@ -306,6 +314,10 @@ static struct wlr_surface *xytolayersurf
+@@ -314,6 +322,10 @@ static struct wlr_scene_node *xytonode(d
  static Monitor *xytomon(double x, double y);
  static void zoom(const Arg *arg);
  
@@ -45,7 +45,7 @@ and control window management state.
  /* variables */
  static const char broken[] = "broken";
  static struct wl_display *dpy;
-@@ -723,6 +735,7 @@ void
+@@ -742,6 +754,7 @@ void
  cleanupmon(struct wl_listener *listener, void *data)
  {
  	struct wlr_output *wlr_output = data;
@@ -53,26 +53,27 @@ and control window management state.
  	Monitor *m = wlr_output->data;
  	int nmons, i = 0;
  
-@@ -730,6 +743,10 @@ cleanupmon(struct wl_listener *listener,
- 	wl_list_remove(&m->frame.link);
- 	wl_list_remove(&m->link);
+@@ -751,6 +764,11 @@ cleanupmon(struct wl_listener *listener,
  	wlr_output_layout_remove(output_layout, m->wlr_output);
+ 	wlr_scene_output_destroy(m->scene_output);
+ 
 +	wl_list_for_each_safe(mon, montmp, &m->dwl_wm_monitor_link, link) {
 +		wl_resource_set_user_data(mon->resource, NULL);
 +		free(mon);
 +	}
- 
- 	nmons = wl_list_length(&mons);
- 	do // don't switch to disabled mons
-@@ -824,6 +841,7 @@ createmon(struct wl_listener *listener,
- 	struct wlr_output *wlr_output = data;
- 	const MonitorRule *r;
- 	Monitor *m = wlr_output->data = calloc(1, sizeof(*m));
-+	wl_list_init(&m->dwl_wm_monitor_link);
++
+ 	if ((nmons = wl_list_length(&mons)))
+ 		do /* don't switch to disabled mons */
+ 			selmon = wl_container_of(mons.prev, selmon, link);
+@@ -861,6 +879,7 @@ createmon(struct wl_listener *listener,
+ 		EBARF("createmon: calloc");
  	m->wlr_output = wlr_output;
  
++	wl_list_init(&m->dwl_wm_monitor_link);
+ 	wlr_output_init_render(wlr_output, alloc, drw);
+ 
  	/* Initialize monitor state using configured rules */
-@@ -1595,6 +1613,7 @@ printstatus(void)
+@@ -1746,6 +1765,7 @@ printstatus(void)
  		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
  				sel, urg);
  		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
@@ -80,15 +81,15 @@ and control window management state.
  	}
  	fflush(stdout);
  }
-@@ -2141,6 +2160,7 @@ setup(void)
+@@ -2173,6 +2193,7 @@ setup(void)
  	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
  
- 	presentation = wlr_presentation_create(dpy, backend);
+ 	wlr_scene_set_presentation(scene, wlr_presentation_create(dpy, backend));
 +	wl_global_create(dpy, &znet_tapesoftware_dwl_wm_v1_interface, 1, NULL, dwl_wm_bind);
  
  #ifdef XWAYLAND
  	/*
-@@ -2644,3 +2664,193 @@ main(int argc, char *argv[])
+@@ -2653,3 +2674,193 @@ main(int argc, char *argv[])
  usage:
  	BARF("Usage: %s [-s startup command]", argv[0]);
  }

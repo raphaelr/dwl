@@ -1,21 +1,21 @@
 Adjust the dwl build for my own purposes.
 --- a/Makefile
 +++ b/Makefile
-@@ -16,9 +16,13 @@ clean:
- 
+@@ -17,9 +17,13 @@ clean:
  install: dwl
- 	install -D dwl $(PREFIX)/bin/dwl
+ 	install -Dm755 dwl $(PREFIX)/bin/dwl
+ 	install -Dm644 dwl.1 $(MANDIR)/man1/dwl.1
 +	install -D dwl-session $(PREFIX)/bin/dwl-session
 +	install -D dwl.desktop /usr/share/wayland-sessions/dwl.desktop
  
  uninstall:
- 	rm -f $(PREFIX)/bin/dwl
+ 	rm -f $(PREFIX)/bin/dwl $(MANDIR)/man1/dwl.1
 +	rm -f $(PREFIX)/bin/dwl-session
 +	rm -f /usr/share/wayland-sessions/dwl.desktop
  
  .PHONY: all clean install uninstall
  
-@@ -56,7 +60,7 @@ idle-protocol.c:
+@@ -57,7 +61,7 @@ idle-protocol.c:
  idle-protocol.o: idle-protocol.h
  
  config.h: | config.def.h

@@ -10,7 +10,7 @@ Supported features:
 This patch adds the .xml file and feeds it into wayland-scanner.
 --- a/Makefile
 +++ b/Makefile
-@@ -59,6 +59,16 @@ idle-protocol.c:
+@@ -71,6 +71,16 @@ idle-protocol.c:
  
  idle-protocol.o: idle-protocol.h
  

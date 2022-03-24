@@ -4,13 +4,11 @@ This fixes a crash when switching surfaces while using virtual
 keyboards (e.g. wtype).
 
 GH issue: https://github.com/djpohly/dwl/issues/124
-diff --git a/dwl.c b/dwl.c
-index 6303c25..e55cc54 100644
 --- a/dwl.c
 +++ b/dwl.c
-@@ -608,8 +608,12 @@ arrangelayers(Monitor *m)
+@@ -602,8 +602,12 @@ arrangelayers(Monitor *m)
  					layersurface->layer_surface->mapped) {
- 				// Deactivate the focused client.
+ 				/* Deactivate the focused client. */
  				focusclient(NULL, 0);
 -				wlr_seat_keyboard_notify_enter(seat, layersurface->layer_surface->surface,
 -						kb->keycodes, kb->num_keycodes, &kb->modifiers);
@@ -23,7 +21,7 @@ index 6303c25..e55cc54 100644
  				return;
  			}
  		}
-@@ -647,7 +651,7 @@ buttonpress(struct wl_listener *listener, void *data)
+@@ -643,7 +647,7 @@ buttonpress(struct wl_listener *listener
  			focusclient(c, 1);
  
  		keyboard = wlr_seat_get_keyboard(seat);
@@ -32,7 +30,7 @@ index 6303c25..e55cc54 100644
  		for (b = buttons; b < END(buttons); b++) {
  			if (CLEANMASK(mods) == CLEANMASK(b->mod) &&
  					event->button == b->button && b->func) {
-@@ -1113,8 +1117,12 @@ focusclient(Client *c, int lift)
+@@ -1182,8 +1186,12 @@ focusclient(Client *c, int lift)
  
  	/* Have a client, so focus its top-level wlr_surface */
  	kb = wlr_seat_get_keyboard(seat);

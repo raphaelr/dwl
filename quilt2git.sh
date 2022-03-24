@@ -37,7 +37,6 @@ single() {
 	series "$1" "$1"
 }
 
-single layer-surface-performance
 single tag-handling
 single master-on-right-toggle
 single wlr_virtual_pointer_v1

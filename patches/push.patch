@@ -10,24 +10,18 @@ Subject: [PATCH 1/2] port dwm "push" patch to dwl
  3 files changed, 67 insertions(+)
  create mode 100644 push.c
 
-diff --git a/Makefile b/Makefile
-index a0d1cc37..1701b63e 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -49,6 +49,8 @@ config.h: | config.def.h
+@@ -65,4 +65,6 @@ config.h: | config.def.h
  
- dwl.o: config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
+ dwl.o: config.mk config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
  
 +dwl.o: push.c
 +
  dwl: xdg-shell-protocol.o wlr-layer-shell-unstable-v1-protocol.o idle-protocol.o
- 
- clean:
-diff --git a/dwl.c b/dwl.c
-index 72f1046b..4cfd7d07 100644
 --- a/dwl.c
 +++ b/dwl.c
-@@ -369,7 +369,9 @@ static Atom netatom[NetLast];
+@@ -368,7 +368,9 @@ static Atom netatom[NetLast];
  #endif
  
  /* configuration, allows nested code to access above variables */
@@ -37,9 +31,6 @@ index 72f1046b..4cfd7d07 100644
  
  /* attempt to encapsulate suck into one file */
  #include "client.h"
-diff --git a/push.c b/push.c
-new file mode 100644
-index 00000000..26ed462f
 --- /dev/null
 +++ b/push.c
 @@ -0,0 +1,63 @@
@@ -106,20 +97,6 @@ index 00000000..26ed462f
 +	focusclient(sel, 1);
 +	arrange(selmon);
 +}
-
-From 156a13d9f9f9d8df16b184f5ec0c84e6e5b94df6 Mon Sep 17 00:00:00 2001
-From: "Devin J. Pohly" <djpohly@gmail.com>
-Date: Thu, 4 Mar 2021 13:52:58 -0600
-Subject: [PATCH 2/2] add missing header
-
----
- push.h | 4 ++++
- 1 file changed, 4 insertions(+)
- create mode 100644 push.h
-
-diff --git a/push.h b/push.h
-new file mode 100644
-index 00000000..59c0f80e
 --- /dev/null
 +++ b/push.h
 @@ -0,0 +1,4 @@
